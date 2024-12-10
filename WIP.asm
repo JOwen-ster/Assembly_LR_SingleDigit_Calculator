@@ -25,16 +25,17 @@ NULL            equ    0
 SYS_exit        equ    60
 EXIT_SUCCESS    equ    0
 msg1            db     "Input a math expression: ", NULL
-
 section .text
         global _start
 _start:
     print msg1, 25
+
     input buffer, 256
     mov rsi, 0                      ; Set index to 0 (first character)
+    xor rcx, rcx
 
     ; Initialize the first operand as the current total
-    mov rcx, qword [buffer + rsi]    ; Read the first character
+    mov rcx, qword [buffer + rsi]   ; Read the first character
     and rcx, 0fh                    ; Convert ASCII to integer
     mov qword [total], rcx          ; Store as initial total
     xor rcx, rcx                    ; Clear rcx
@@ -43,8 +44,6 @@ _start:
 processExpression:
     cmp byte [buffer + rsi], NULL   ; Check if end of input
     je ToAscii                      ; Exit loop if null terminator
-    cmp byte [buffer + rsi], LF     ; Check if newline
-    je ToAscii                      ; Exit loop if newline
 
     ; Check for operators
     cmp byte [buffer + rsi], "+"
@@ -61,44 +60,53 @@ processExpression:
     jmp processExpression
 
 add_operator:
+    xor rcx, rcx                    ; Clear rcx
+
     inc rsi
     mov rcx, qword [buffer + rsi]    ; Read next character
     and rcx, 0fh                    ; Convert ASCII to integer
     add qword [total], rcx          ; Perform addition
-    xor rcx, rcx                    ; Clear rcx
+
     inc rsi                         ; Move to next character
     jmp processExpression
 
 sub_operator:
+    xor rcx, rcx
+
     inc rsi
     mov rcx, qword [buffer + rsi]
     and rcx, 0fh
     sub qword [total], rcx
-    xor rcx, rcx
+
     inc rsi
     jmp processExpression
 
 mul_operator:
+    xor rax, rax
+    xor rcx, rcx
+
     inc rsi
     mov rcx, qword [buffer + rsi]
     and rcx, 0fh
     mov rax, qword [total]
     mul rcx
     mov qword [total], rax
-    xor rax, rax
-    xor rcx, rcx
+
     inc rsi
     jmp processExpression
 
 div_operator:
+    xor rax, rax
+    xor rcx, rcx
+    xor rdx, rdx
+    
     inc rsi
     mov rcx, qword [buffer + rsi]
     and rcx, 0fh
     mov rax, qword [total]
     div rcx
     mov qword [total], rax
-    xor rax, rax
-    xor rcx, rcx
+
     inc rsi
     jmp processExpression
 
