@@ -25,6 +25,7 @@ NULL            equ    0
 SYS_exit        equ    60
 EXIT_SUCCESS    equ    0
 msg1            db     "Input a math expression: ", NULL
+
 section .text
         global _start
 _start:
