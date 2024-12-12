@@ -26,13 +26,15 @@ section .bss
 buffer          resb    256         ; Input expression
 total           resq    1           ; final total as integer
 output          resb    10          ; final total as ASCII;
+bufferLength    resb    256         ; length of the buffer not including the null terminator
 
 section .data           
 LF              equ    10           ; LF = 10
 NULL            equ    0            ; NULL = 0
 SYS_exit        equ    60           ; SYS_EXIT = 60
 EXIT_SUCCESS    equ    0            ; EXIT_SUCCESS = 0
-msg1            db     "Input a math expression: ", NULL ; msg1 = "Input a math expression: ", NULL
+msg1            db     "Input a math expression: ", NULL ; msg1 = "Input a math expression: ",
+equalSign       db     " = ", NULL
 
 section .text
         global _start
@@ -106,10 +108,12 @@ div_operator:
     xor rax, rax                    ; Clear rax to move and manipulate characters
     xor rcx, rcx                    ; Clear rcx to move and manipulate characters
     xor rdx, rdx                    ; Clear rdx to move and manipulate characters
-    
+
     inc rsi                         ; index++
+
     mov rcx, qword [buffer + rsi]   ; rcx = buffer[index]
     and rcx, 0fh                    ; Convert ASCII to integer
+
     mov rax, qword [total]          ; rax = total
     div rcx                         ; rdx:rax = rax / rcx, rax = quotient, rdx = remainder
     mov qword [total], rax          ; total = rax
@@ -118,8 +122,13 @@ div_operator:
     jmp processExpression           ; Check character
 
 ToAscii:
+    mov qword[bufferLength], rsi    ; Get number of characters in the input buffer
+    sub qword[bufferLength], 1      ; subtract 1 to not count the null terminator which is treated as a character
+
     ; Convert total to ASCII and store in output
     ; Part A - Successive division
+    xor rax, rax
+    xor rbx, rbx
     mov rax, qword [total]          ; Get total
     mov rcx, 0                      ; Digit count = 0
     mov rbx, 10                     ; Set for dividing by 10
@@ -142,6 +151,8 @@ popLoop:
     loop popLoop                    ; Repeat for all digits
     mov byte [rbx + rdi], LF        ; Add newline at the end
 
+    print buffer, [bufferLength]    ; print(buffer)
+    print equalSign, 3              ; print(equalSign)
     print output, 16                ; print(output)
 
     mov rax, SYS_exit               ; Exit program
