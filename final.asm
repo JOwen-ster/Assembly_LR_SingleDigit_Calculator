@@ -19,6 +19,7 @@ buffer          resb    256         ; Input expression
 total           resq    1           ; final total as integer
 output          resb    10          ; final total as ASCII;
 bufferLength    resb    256         ; length of the buffer not including the null terminator
+totalLength     resb    256         ; number of digits in total
 
 section .data           
 LF              equ    10           ; LF = 10
@@ -143,9 +144,12 @@ popLoop:
     loop popLoop                    ; Repeat for all digits
     mov byte [rbx + rdi], LF        ; Add newline at the end
 
+    inc rdi
+    mov qword[totalLength], rdi
+
     print buffer, [bufferLength]    ; print(buffer)
     print equalSign, 3              ; print(equalSign)
-    print output, 16                ; print(output)
+    print output, [totalLength]     ; print(output)
 
     mov rax, SYS_exit               ; Exit program
     mov rdi, EXIT_SUCCESS           ; Exit success
