@@ -27,10 +27,10 @@ NULL            equ    0            ; NULL = 0
 SYS_exit        equ    60           ; SYS_EXIT = 60
 EXIT_SUCCESS    equ    0            ; EXIT_SUCCESS = 0
 msg1            db     "Input a math expression: ", NULL ; msg1 = "Input a math expression: ",
-equalSign       db     " = ", NULL
+equalSign       db     " = ", NULL  ; equalSign = " = "
 
 section .text
-        global _start
+        global _start               ; start
 _start:
     print msg1, 25                  ; print(msg1)
 
@@ -120,8 +120,8 @@ ToAscii:
 
     ; Convert total to ASCII and store in output
     ; Part A - Successive division
-    xor rax, rax
-    xor rbx, rbx
+    xor rax, rax                    ; clear rax
+    xor rbx, rbx                    ; clear rbx
     mov rax, qword [total]          ; Get total
     mov rcx, 0                      ; Digit count = 0
     mov rbx, 10                     ; Set for dividing by 10
@@ -144,13 +144,13 @@ popLoop:
     loop popLoop                    ; Repeat for all digits
     mov byte [rbx + rdi], LF        ; Add newline at the end
 
-    inc rdi
-    mov qword[totalLength], rdi
+    inc rdi                         ; inc rdi to account for the newline
+    mov qword[totalLength], rdi     ; totalLength = rdi
 
     print buffer, [bufferLength]    ; print(buffer)
     print equalSign, 3              ; print(equalSign)
     print output, [totalLength]     ; print(output)
-
+done:
     mov rax, SYS_exit               ; Exit program
     mov rdi, EXIT_SUCCESS           ; Exit success
     syscall                         ; Call system services
