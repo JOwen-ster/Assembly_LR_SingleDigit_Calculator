@@ -15,119 +15,127 @@
 %endmacro
 
 section .bss
-buffer          resb    256             ;input expression
-total           resq    1               ;final total int
-output          resb    16              ;final total as ascii ; 16 digits
+buffer          resb    256         ; Input expression
+total           resq    1           ; final total as integer
+output          resb    10          ; final total as ASCII;
 
-section .data
-LF              equ    10
-NULL            equ    0
-SYS_exit        equ    60
-EXIT_SUCCESS    equ    0
-msg1            db     "Input a math expression: ", NULL
+section .data           
+LF              equ    10           ; LF = 10
+NULL            equ    0            ; NULL = 0
+SYS_exit        equ    60           ; SYS_EXIT = 60
+EXIT_SUCCESS    equ    0            ; EXIT_SUCCESS = 0
+msg1            db     "Input a math expression: ", NULL ; msg1 = "Input a math expression: ", NULL
 
 section .text
-                global _start
+        global _start
 _start:
-        print msg1, 25
-        input buffer, 256
-        mov rsi, 0              ; Set index to 0 (first character)
+    print msg1, 25                  ; print(msg1)
 
-    ; Convert first character from ASCII to integer and store it as the current total
-    mov rcx, qword[buffer + rsi] 
-    and rcx, 0fh                 
-    mov qword[total], rcx
-    xor rcx, rcx
-    inc rsi
-    mov rbx, 5
+    input buffer, 256               ; cin > buffer
+    mov rsi, 0                      ; Set index to 0 (first character)
+    xor rcx, rcx                    ; clear rcx
 
-checkOperator:
-        cmp rbx, 0
-        jbe ToAscii
+    ; Initialize the first operand as the current total
+    mov rcx, qword [buffer + rsi]   ; Read the first character
+    and rcx, 0fh                    ; Convert ASCII to integer
+    mov qword [total], rcx          ; Store integer as the initial total
+    xor rcx, rcx                    ; Clear rcx
+    inc rsi                         ; Move index pointer to next character in the input buffer
 
-        cmp byte[buffer + rsi], "+"
-        je add_operator
-        cmp byte[buffer + rsi], "-"
-        je sub_operator
-        cmp byte[buffer + rsi], "*"
-        je mul_operator
-        cmp byte[buffer + rsi], "/"
-        je div_operator
+processExpression:
+    cmp byte [buffer + rsi], NULL   ; Check if current character is null terminator
+    je ToAscii                      ; Exit loop if null terminator
+
+    cmp byte [buffer + rsi], "+"    ; if character == "+"
+    je add_operator                 ; GOTO add_operator
+    cmp byte [buffer + rsi], "-"    ; if character == "-"
+    je sub_operator                 ; GOTO sub_operator
+    cmp byte [buffer + rsi], "*"    ; if character == "*"
+    je mul_operator                 ; GOTO mul_operator
+    cmp byte [buffer + rsi], "/"    ; if character == "/"
+    je div_operator                 ; GOTO div_operator
+
+    inc rsi                         ; else index++
+    jmp processExpression           ; loop
 
 add_operator:
-        inc rsi
-        mov rcx, qword[buffer + rsi]
-        and rcx, 0fh
-        add qword[total], rcx
-        xor rcx, rcx
-        inc rsi
-        dec rbx
-        jmp checkOperator
+    xor rcx, rcx                    ; clear rcx to move and manipulate characters
+
+    inc rsi                         ; index++
+    mov rcx, qword [buffer + rsi]   ; rcx = buffer[index]
+    and rcx, 0fh                    ; Convert ASCII to integer
+    add qword [total], rcx          ; perform addition on total, total = total + rcx
+
+    inc rsi                         ; index++
+    jmp processExpression           ; check character
 
 sub_operator:
-        inc rsi
-        mov rcx, qword[buffer + rsi]
-        and rcx, 0fh
-        sub qword[total], rcx
-        xor rcx, rcx
-        inc rsi
-        dec rbx
-        jmp checkOperator
+    xor rcx, rcx                    ; clear rcx to move and manipulate characters
+
+    inc rsi                         ; index++
+    mov rcx, qword [buffer + rsi]   ; rcx = buffer[index]
+    and rcx, 0fh                    ; Convert ASCII to integer
+    sub qword [total], rcx          ; perform subtraction on total, total = total - rcx 
+
+    inc rsi                         ; index++
+    jmp processExpression           ; Check character
 
 mul_operator:
-        inc rsi
-        mov rcx, qword[buffer + rsi]
-        and rcx, 0fh
-        mov rax, qword[total]
-        mul rcx
-        xor rcx, rcx
-        mov qword[total], rax
-        xor rax, rax
-        inc rsi
-        dec rbx
-        jmp checkOperator
+    xor rax, rax                    ; clear rax to move and manipulate characters
+    xor rcx, rcx                    ; clear rcx to move and manipulate characters
+
+    inc rsi                         ; index++
+    mov rcx, qword [buffer + rsi]   ; rcx = buffer[index]
+    and rcx, 0fh                    ; Convert ASCII to integer
+    mov rax, qword [total]          ; rax = total
+    mul rcx                         ; rax = rax * rcx
+    mov qword [total], rax          ; total = rax
+
+    inc rsi                         ; index++
+    jmp processExpression           ; Check character
 
 div_operator:
-        inc rsi
-        mov rcx, qword[buffer + rsi]
-        and rcx, 0fh
-        mov rax, qword[total]
-        div rcx
-        xor rcx, rcx
-        mov qword[total], rax
-        xor rax, rax
-        inc rsi
-        dec rbx
-        jmp checkOperator
+    xor rax, rax                    ; Clear rax to move and manipulate characters
+    xor rcx, rcx                    ; Clear rcx to move and manipulate characters
+    xor rdx, rdx                    ; Clear rdx to move and manipulate characters
+    
+    inc rsi                         ; index++
+    mov rcx, qword [buffer + rsi]   ; rcx = buffer[index]
+    and rcx, 0fh                    ; Convert ASCII to integer
+    mov rax, qword [total]          ; rax = total
+    div rcx                         ; rdx:rax = rax / rcx, rax = quotient, rdx = remainder
+    mov qword [total], rax          ; total = rax
 
-ToAscii:                     
+    inc rsi                         ; index++
+    jmp processExpression           ; Check character
+
+ToAscii:
     ; Convert total to ASCII and store in output
-	; Part A - Successive division
-	mov 	rax, qword[total] 		;get sum
-	mov 	rcx, 0 					;digitCount = 0
-	mov 	rbx, 10 				;set for dividing by 10
+    ; Part A - Successive division
+    mov rax, qword [total]          ; Get total
+    mov rcx, 0                      ; Digit count = 0
+    mov rbx, 10                     ; Set for dividing by 10
 divideLoop:
-	mov 	rdx, 0					;edx = 0 
-	div 	rbx 					;divide number by 10
-        push 	rdx 					;push remainder
-	inc 	rcx 					;increment digitCount
-	cmp 	rax, 0 					;if (result > 0)
-	jg 	divideLoop 				;goto divideLoop
+    mov rdx, 0                      ; Clear rdx
+    div rbx                         ; Divide number by 10
+    push rdx                        ; Push remainder
+    inc rcx                         ; Increment digit count
+    cmp rax, 0                      ; Check if result > 0
+    jg divideLoop                   ; If yes, repeat loop
 
-	; Part B - Convert remainders and store
-	mov 	rbx, output 				;get addr of ascii
-	mov 	rdi, 0 					;rdi = 0
+    ; Part B - Convert remainders and store
+    mov rbx, output                 ; Get address of ASCII
+    mov rdi, 0                      ; rdi = 0
 popLoop:
-	pop 	rax 					;pop intDigit
-	add 	al, "0" 				;al = al + 0x30
-	mov 	byte[rbx+rdi], al 		;string[rdi] = al
-	inc 	rdi 					;increment rdi
-	loop 	popLoop 				;if (digitCount > 0) goto popLoop
-	mov 	byte[rbx+rdi], LF 		;string[rdi] = newline
+    pop rax                         ; Pop intDigit
+    add al, "0"                     ; Convert to ASCII
+    mov byte [rbx + rdi], al        ; Store in output buffer
+    inc rdi                         ; Increment index
+    loop popLoop                    ; Repeat for all digits
+    mov byte [rbx + rdi], LF        ; Add newline at the end
 
-    print output, 256
+    print output, 16                ; print(output)
 
-
-    mov     rax, SYS_exit            ;terminate excuting process
-    mov     rdi, EXIT_SUCCESS        ;exit status
-    syscall
+    mov rax, SYS_exit               ; Exit program
+    mov rdi, EXIT_SUCCESS           ; Exit success
+    syscall                         ; Call system services
